@@ -10,13 +10,15 @@ import torch
 import torch.optim as optim
 import numpy as np
 
+"""
+Ajoy
+    将球心初始化的部分删掉，只保留对参数w和半径R的计算
+"""
 
 class DeepSVDDTrainer(BaseTrainer):
     """
         对比实验(deepSVDD)
         Ajoy 和 svdd_trainer.py一致，应该是便于区分在对比实验中调用，还是DLDM中调用
-
-
     """
 
     def __init__(self, objective, R, c, nu: float, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 150,
@@ -64,11 +66,14 @@ class DeepSVDDTrainer(BaseTrainer):
         # Set learning rate scheduler
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.lr_milestones, gamma=0.1)
 
+        """
+        # Ajoy 球心初始化交给方差损失进行
         # Initialize hypersphere center c (if c not loaded)
         if self.c is None:
             logger.info('Initializing center c...')
             self.c = self.init_center_c(train_loader, net)
             logger.info('Center c initialized.')
+        """
 
         # Training
         logger.info('Starting training...')
@@ -168,9 +173,9 @@ class DeepSVDDTrainer(BaseTrainer):
         self.test_auc = roc_auc_score(labels, scores)
         logger.info('Test set AUC: {:.2f}%'.format(100. * self.test_auc))
         logger.info('Finished testing.')
-
+    """
     def init_center_c(self, train_loader: DataLoader, net: BaseNet, eps=0.1):
-        """Initialize hypersphere center c as the mean from an initial forward pass on the data."""
+        # Initialize hypersphere center c as the mean from an initial forward pass on the data.
         n_samples = 0
         c = torch.zeros(net.rep_dim, device=self.device)
 
@@ -191,7 +196,7 @@ class DeepSVDDTrainer(BaseTrainer):
         c[(abs(c) < eps) & (c > 0)] = eps
 
         return c
-
+    """
 
 def get_radius(dist: torch.Tensor, nu: float):
     """Optimally solve for radius R via the (1-nu)-quantile of distances."""
