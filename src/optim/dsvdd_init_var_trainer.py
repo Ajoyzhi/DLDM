@@ -16,7 +16,8 @@ Ajoy
     输出：svdd网络结构（32维outputs）
     功能：在用AE参数对svdd网络进行初始化之后，再利用方差损失对模型进行训练，使数据更加聚集
          测试过程需要对球心进行初始化，即第一次运行结果的平均值（只对球心c进更新，不涉及半径和nu参数）
-         将初始化球心部分加入到test()函数中
+         加入初始化球心部分
+         简单test()
 """
 class DSVDDInitVarTrainer(BaseTrainer):
 
@@ -94,38 +95,17 @@ class DSVDDInitVarTrainer(BaseTrainer):
 
         self.train_time = time.time() - start_time
         logger.info('Training time: %.3f' % self.train_time)
-        logger.info('Finished training.')
+        logger.info('Finished training with var.')
 
         return dsvdd_init_net
 
-    def init_center_c(self, train_loader: DataLoader, dsvdd_init_net: BaseNet, eps=0.1):
-        """Initialize hypersphere center c as the mean from an initial forward pass on the data."""
-        n_samples = 0
-        c = torch.zeros(dsvdd_init_net.rep_dim, device=self.device)
-
-        dsvdd_init_net.eval()
-        with torch.no_grad():
-            for data in train_loader:
-                # get the inputs of the batch
-                inputs, _, _ = data
-                inputs = inputs.to(self.device)
-                outputs = dsvdd_init_net(inputs)
-                n_samples += outputs.shape[0]
-                c += torch.sum(outputs, dim=0)
-
-        c /= n_samples
-
-        # If c_i is too close to 0, set to +-eps. Reason: a zero unit can be trivially matched with zero weights.
-        c[(abs(c) < eps) & (c < 0)] = -eps
-        c[(abs(c) < eps) & (c > 0)] = eps
-
-        return c
-
+    """
+    Ajoy
+        测试过程只将每个数据对应的方差损失输出
+        因为直接对数据集进行加载，所以需要test_loader
+    """
     def test(self, dataset: BaseADDataset, dsvdd_init_net: BaseNet, eps=0.1):
         logger = logging.getLogger()
-        """Initialize hypersphere center c as the mean from an initial forward pass on the data."""
-        n_samples = 0
-        c = torch.zeros(dsvdd_init_net.rep_dim, device=self.device)
 
         # Set device for networks
         dsvdd_init_net = dsvdd_init_net.to(self.device)
@@ -136,36 +116,46 @@ class DSVDDInitVarTrainer(BaseTrainer):
         # Testing
         logger.info('Starting testing with var...')
         start_time = time.time()
-        idx_label_score = []
         dsvdd_init_net.eval()
         with torch.no_grad():
             for data in test_loader:
                 inputs, labels, idx = data
                 inputs = inputs.to(self.device)
                 outputs = dsvdd_init_net(inputs)
-                # Ajoy 初始化球心c
-                n_samples += outputs.shape[0]
-                c += torch.sum(outputs, dim=0)
-
                 scores = var_loss(outputs)
-                # Save triples of (idx, label, score) in a list
-                idx_label_score += list(zip(idx.cpu().data.numpy().tolist(),
-                                            labels.cpu().data.numpy().tolist(),
-                                            scores.cpu().data.numpy().tolist()))
+                print(
+                    # '\nidx:', idx,
+                    '\nvar_loss:', scores
+                )
+        logger.info('Fininshed testing with var.')
+    """
+    AJoy
+        利用方差损失初始化好的dsvdd网络对球心进行初始化
+    """
+    def init_center_c(self, dataset: BaseADDataset, dsvdd_init_net: BaseNet, eps=0.1):
+        logger = logging.getLogger()
+        # Set device for networks
+        dsvdd_init_net = dsvdd_init_net.to(self.device)
 
-        self.test_time = time.time() - start_time
-        logger.info('Testing time: %.3f' % self.test_time)
+        # Get test data loader
+        _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
-        _, labels, scores = zip(*idx_label_score)
-        labels = np.array(labels)
-        scores = np.array(scores)
+        # Initialize hypersphere center c as the mean from an initial forward pass on the data.
+        n_samples = 0
+        c = torch.zeros(dsvdd_init_net.rep_dim, device=self.device)
 
-        self.test_ftr, self.test_tpr, _ = roc_curve(labels, scores)
-
-        self.test_score = scores
-        self.test_auc = roc_auc_score(labels, scores)
-        logger.info('Test set AUC: {:.2f}%'.format(100. * self.test_auc))
-        logger.info('Finished testing.')
+        logger.info('Initializing center c...')
+        dsvdd_init_net.eval()
+        with torch.no_grad():
+            for data in test_loader:
+                # get the inputs of the batch
+                inputs, _, _ = data
+                inputs = inputs.to(self.device)
+                # output为32维数据  batch * 32
+                outputs = dsvdd_init_net(inputs)
+                n_samples += outputs.shape[0]
+                # 求每列的和
+                c += torch.sum(outputs, dim=0)
 
         c /= n_samples
 
@@ -173,6 +163,7 @@ class DSVDDInitVarTrainer(BaseTrainer):
         c[(abs(c) < eps) & (c < 0)] = -eps
         c[(abs(c) < eps) & (c > 0)] = eps
 
+        logger.info('Center c initialized.')
         return c
 
 # 定义损失函数

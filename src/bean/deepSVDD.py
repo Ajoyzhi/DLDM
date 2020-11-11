@@ -3,11 +3,15 @@ import torch
 
 from base.base_dataset import BaseADDataset
 from networks.main import build_network, build_autoencoder
+from optim.dsvdd_init_var_trainer import DSVDDInitVarTrainer
 from optim.deepSVDD_trainer import DeepSVDDTrainer
 from optim.ae_trainer import AETrainer
 from lstm import Lstm
 
-
+"""
+Ajoy
+    在pretrain()函数中加入方差训练网络的部分
+"""
 class DeepSVDD(object):
     """
         dldm-svdd 部分的逻辑代码
@@ -39,6 +43,8 @@ class DeepSVDD(object):
         self.ae_net = None  # autoencoder networks for pretraining
         self.ae_trainer = None
         self.ae_optimizer_name = None
+
+        self.svdd_init_var_trainer = None
 
         self.results = {
             'train_time': None,
@@ -107,11 +113,14 @@ class DeepSVDD(object):
         self.results['test_ftr'] = self.trainer.test_ftr
         self.results['test_tpr'] = self.trainer.test_tpr
 
+    """
+    Ajoy 
+        dataset:LSTM-AE得到的中间编码 code_dataset
+    """
     def pretrain(self, dataset: BaseADDataset, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 100,
                  lr_milestones: tuple = (), batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
                  n_jobs_dataloader: int = 0):
         """Pretrains the weights for the Deep SVDD networks via autoencoder."""
-
         self.ae_net = build_autoencoder(self.net_name)
         self.ae_optimizer_name = optimizer_name
         self.ae_trainer = AETrainer(optimizer_name, lr=lr, n_epochs=n_epochs, lr_milestones=lr_milestones,
@@ -120,6 +129,15 @@ class DeepSVDD(object):
         self.ae_net = self.ae_trainer.train(dataset, self.ae_net)
         self.ae_trainer.test(dataset, self.ae_net)
         self.init_network_weights_from_pretraining()
+
+        # Ajoy 在对DSVDD模型进行初始化之后，再利用方差训练dsvdd网络
+        self.svdd_init_var_trainer = DSVDDInitVarTrainer(self.c, optimizer_name, lr=lr, n_epochs=n_epochs, lr_milestones=lr_milestones,
+                                                         batch_size=batch_size, weight_decay=weight_decay, device=device,
+                                                         n_jobs_dataloader=n_jobs_dataloader)
+        self.net = self.svdd_init_var_trainer.train(dataset, self.net)
+        self.svdd_init_var_trainer.test(dataset, self.net)
+        # 训练结束之后，获取初始化的球心c
+        self.c = self.svdd_init_var_trainer.init_center_c(dataset, self.net)
 
     def init_network_weights_from_pretraining(self):
         """Initialize the Deep SVDD networks weights from the encoder weights of the pretraining autoencoder."""

@@ -34,6 +34,7 @@ class Manager(object):
 
     def lstm_svdd_manager(self, dataset: BaseADDataset, lstm: Lstm, pre_epoch=10, n_epochs=4):
         """ svdd 训练 + 测试逻辑 """
+        # Ajoy LSTM-AE输出的8维中间编码
         code_dataset = Code_Dataset(lstm)
         # Ajoy 只使用单类损失函数进行训练
         svdd = DeepSVDD(lstm=lstm, objective='one-class', n_code=8)

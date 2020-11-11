@@ -10,17 +10,17 @@ class Code_Dataset(TorchvisionDataset):
     """
         数据集：
             来自于 lstm-autoencoder 输出的 code(中间编码)
-            该数据集作为 svdd-autoencoder 和 deep-svdd的输入
+            该数据集作为 svdd-autoencoder 、svdd_inint_var（Ajoy）和 deep-svdd的输入
 
         属性：
             train_code：训练集的数据  shape = (97278, 8)
             train_label：训练集的标签 shape = (97278,)
             test_code：测试集的数据   shape = (283913, 8)
             test_label：测试集的标签  shape = (283913,)
+        AJoy作用：
+            加载所有的训练数据和测试数据
 
-        Ajoy 为啥不直接利用Dataset？
     """
-
     def __init__(self, lstm: Lstm):
         super().__init__()
 
@@ -57,7 +57,8 @@ class Code(Dataset.Dataset):
         return self.Data[index], self.Label[index], index
 
     def __len__(self):
-        return len(self.Data)
+        return len(self.Data)   
+
 
 
 
