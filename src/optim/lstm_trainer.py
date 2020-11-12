@@ -9,7 +9,12 @@ import logging
 import time
 import numpy as np
 
-
+"""
+Ajoy:加入函数get_code()
+     输入：数据集，LSTM网络
+     输出：LSTM的中间编码及对应的label
+     调用：lstm。get_code(dataset)
+"""
 class LstmTrainer(BaseTrainer):
     """
     lstm 具体实现
@@ -63,6 +68,7 @@ class LstmTrainer(BaseTrainer):
         # Set device for networks
         net = net.to(self.device)
 
+        # Ajoy 其实是TorchvisionDataset中得到loader方法，可以加载训练集和测试集
         train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         optimizer = optim.RMSprop(net.parameters(), lr=self.lr, weight_decay=self.weight_decay, eps=self.epsilon,
@@ -115,7 +121,7 @@ class LstmTrainer(BaseTrainer):
 
     def test(self, dataset: BaseADDataset, net: BaseNet, is_test=0):
         """
-            dt_type：数据集的类型， 测试集 0 / 训练集 1
+            dt_type：数据集的类型， 测试集 0 / 训练集 1 /
         """
         logger = logging.getLogger()
 
@@ -199,3 +205,45 @@ class LstmTrainer(BaseTrainer):
     def load_code(self):
         """ 加载 lstm 网络输出的 code 和 label """
         return self.train_code, self.train_label, self.test_code, self.test_label
+
+    # 获取输入数据集的中间编码
+    def get_code(self, dataset: BaseADDataset, net: BaseNet):
+        # 定义输出的编码和标签
+        other_code = []
+        other_label = []
+
+        logger = logging.getLogger()
+
+        # Set device for networks
+        net = net.to(self.device)
+
+        # Get anomaly dataset_loader
+        anomaly_loader = dataset.anomaly_loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
+
+        # Testing
+        logger.info('Getting the code of the dataset...')
+        net.eval()
+        with torch.no_grad():
+            for data in anomaly_loader:
+                inputs, labels, idx = data
+                inputs = inputs.to(self.device)
+
+                # get lstm test label，label.shape = (128,)
+                label = labels.numpy()
+
+                for i in range(len(label)):
+                    self.other_label.append(label[i])
+
+                # Ajoy LSTMnet中定义的forward函数中返回了encoder和decoder两个函数的值
+                code = net(inputs.view(-1, 1, self.n_features))
+                # Ajoy 从当前图中返回一个新的tensor，该tensor不需要计算梯度
+                code = code.detach().numpy()
+
+                for i in range(len(code)):
+                    # Ajoy 将测试数据集的中间编码放入test_code数组
+                    # 【为什么要用追加？因为一次只能对一个batch的数据进行操作，所以只能得到一个batch的code，所以每次要追加】
+                    self.other_code.append(code[i])
+
+        logger.info('Finished getting code.')
+
+        return other_code, other_label

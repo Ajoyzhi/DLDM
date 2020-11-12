@@ -79,3 +79,5 @@ class Lstm(object):
     def load_code(self):
         """ 加载 lstm 网络输出的 code 和 label """
         return self.trainer.load_code()
+
+    #Ajoy  没有对get_code进行逻辑定义
