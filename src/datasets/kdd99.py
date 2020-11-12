@@ -13,7 +13,15 @@ from filePaths import final_test
 
 from base.torchvision_dataset import TorchvisionDataset
 
-
+"""
+Ajoy
+    训练集:  原始 ./dataset/kddcup_10_percent_corrected
+            数值化（所有正常数据） ./dataset/kddcup_10_percent_corrected.csv
+            选择对应特征（所有正常数据） ./dataset/kddcup.data_10_percent_final.cvs
+    测试集： 原始 ./dataset/corrected
+            数值化 ./dataset/corrected.cvs
+            选择对应特征 ./dataset/corrected_final.cvs
+"""
 class Kdd99_Dataset(TorchvisionDataset):
     """
         数据集：
@@ -48,7 +56,7 @@ class Kdd99_Dataset(TorchvisionDataset):
         self.test = None
         self.train_labels = None
         self.test_labels = None
-
+        # Ajoy 调用过程，src_train\handle_train均在filepaths.py中
         pre_file(src_train, handle_train, train=1, exper_type=self.exper_type, dos_types=self.dos_types)
         pre_file(src_test, handle_test, train=0, exper_type=self.exper_type, dos_types=self.dos_types)
         #AJOY 加载了KDD99中固定的9个特征（同时还将处理后的数据进行了保存） pre_data
@@ -60,7 +68,8 @@ class Kdd99_Dataset(TorchvisionDataset):
         self.test = test
         self.train_labels = train_label
         self.test_labels = test_label
-        # AJoy 将对应的数据变为tensor
+        # AJoy 获取了训练接和测试集
+        # Ajoy 通过父类TorchvisionDataset中得到loader方法，loader方法返回训练集和测试集
         self.train_set = Kdd99(train, train_label)
         self.test_set = Kdd99(test, test_label)
 

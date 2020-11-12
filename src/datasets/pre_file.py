@@ -5,6 +5,11 @@ import csv
 
 global label_list
 
+"""
+Ajoy：加入get_anomaly_from _train()函数
+      输入：source_file，即所有训练数据所在的原始文件（41维）
+      输出：handled_file，即所有数值化之后的训练数据中的异常数据（41维）
+"""
 
 def find_index(x, y):
     """ 将相应的非数字类型转换为数字标识即符号型数据转化为数值型数据 """
@@ -145,11 +150,14 @@ def pre_file(source_file, handled_file, train, exper_type=0, dos_types=0):
             temp_line[2] = handle_service(row)
             temp_line[3] = handle_flag(row)
             temp_line[41] = handle_label(row)
+            # Ajoy 获取所有的正常数据，并写入相关文件中（分别将训练集和测试集中的正常数据放入不同的文件中）
             if int(temp_line[41]) == 0:
                 temp_line[41] = 0
                 count += 1
                 csv_writer.writerow(temp_line)
+            # Ajoy 对于异常数据的处理
             else:
+                # AJOY 将所有异常数据写入新的文件中
                 if train:
                     if exper_type == 4 and err >= 972:
                         continue
@@ -176,3 +184,23 @@ def pre_file(source_file, handled_file, train, exper_type=0, dos_types=0):
                     else:
                         continue
         data_file.close()
+
+# Ajoy 获取训练集中的异常数据，并输入到文件中
+def get_anomaly_from_train(source_file, handled_file):
+    data_file = open(handled_file, 'w', newline='')
+    with open(source_file, 'r') as data_source:
+        csv_reader = csv.reader(data_source)
+        csv_writer = csv.writer(data_file)
+        count = 0  # 行数
+
+        for row in csv_reader:
+            # 对source_file中的数据进行数值化
+            temp_line = np.array(row)
+            temp_line[1] = handle_protocol(row)
+            temp_line[2] = handle_service(row)
+            temp_line[3] = handle_flag(row)
+            temp_line[41] = handle_label(row)
+            # Ajoy 获取所有的异常数据，并写入相关文件中（并存入到文件中）
+            if int(temp_line[41]) != 0:
+                count += 1
+                csv_writer.writerow(temp_line)

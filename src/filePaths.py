@@ -1,7 +1,7 @@
 """ 数据集 """
 
 src_train = '../data/dataset/kddcup.data_10_percent_corrected' # 原始kdd99训练集
-handle_train = '../data/dataset/kddcup.data_10_percent_corrected.csv' # 指定kdd99测试集
+handle_train = '../data/dataset/kddcup.data_10_percent_corrected.csv' # 指定kdd99训练集
 final_train = '../data/dataset/kddcup.data_10_percent_final.csv' # 归一化，标准化后的kdd99训练集
 src_test = '../data/dataset/corrected' # 原始kdd99测试集
 handle_test = '../data/dataset/corrected.csv' # 指定kdd99测试集
