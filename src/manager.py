@@ -41,6 +41,10 @@ class Manager(object):
         svdd.set_network('SvddNet')
         svdd.pretrain(dataset=code_dataset, device=self.device, n_epochs=pre_epoch)
         svdd.train(dataset=code_dataset, device=self.device, n_epochs=n_epochs)
+
+        # AJOY 加入异常数据的训练过程
+
+
         svdd.test(dataset=dataset, device=self.device)
         return svdd
 

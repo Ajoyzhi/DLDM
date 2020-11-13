@@ -80,4 +80,10 @@ class Lstm(object):
         """ 加载 lstm 网络输出的 code 和 label """
         return self.trainer.load_code()
 
-    #Ajoy  没有对get_code进行逻辑定义
+    #Ajoy
+    def get_code(self, dataset: BaseADDataset, net):
+        self.trainer = LstmTrainer(self, dataset, self.net)
+        # 定义输出的编码和标签
+        other_code, other_label = self.trainer.get_code(self, dataset, self.net)
+
+        return other_code, other_label

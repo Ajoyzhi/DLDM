@@ -6,6 +6,8 @@ final_train = '../data/dataset/kddcup.data_10_percent_final.csv' # 归一化，�
 src_test = '../data/dataset/corrected' # 原始kdd99测试集
 handle_test = '../data/dataset/corrected.csv' # 指定kdd99测试集
 final_test = '../data/dataset/corrected_final.csv' # 归一化，标准化后的kdd99测试集
+handle_train_anomaly = '../data/dataset/kddcup.data_10_percent_corrected_anomaly.csv' # 获取训练集中的所有异常数据（41维）
+final_train_anomaly = '../data/dataset/kddcup.data_10_percent_anomaly_final.csv' # 获取异常数据的指定特征（8-9维）
 
 
 """ 中间数据 fpr + tpr 来绘制roc曲线  """

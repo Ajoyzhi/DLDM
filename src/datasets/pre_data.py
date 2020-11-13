@@ -5,8 +5,9 @@ import pandas
 
 
 """
-Ajoy
-    定义对数据的预处理，包括标准化、归一化
+Ajoy：load_data_kdd99
+      输入：handled_file（读取数据的文件）；final_file（输出的文件）；features（抽取的特征数量）
+      可以复用
 """
 def z_score_normalization(x):
     x = (x - np.mean(x)) / np.std(x)

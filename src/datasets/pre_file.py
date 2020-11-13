@@ -204,3 +204,5 @@ def get_anomaly_from_train(source_file, handled_file):
             if int(temp_line[41]) != 0:
                 count += 1
                 csv_writer.writerow(temp_line)
+
+    data_file.close()
