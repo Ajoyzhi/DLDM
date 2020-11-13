@@ -47,14 +47,6 @@ class Code_Dataset(TorchvisionDataset):
 #        print(roc_self.test_set.__getitem__(7000))
 
 
-    def get_code(self, dataset, lstm: Lstm):
-        anomaly_code, anomaly_label = lstm.get_code(dataset, lstm)
-        anomaly_set = Code(np.array(anomaly_code), np.array(anomaly_label))
-        # Ajoy test
-        print('anomaly_set_size', len(anomaly_set))
-        print(anomaly_set.__getitem__(0))
-
-
 class Code(Dataset.Dataset):
 
     def __init__(self, Data, Label):

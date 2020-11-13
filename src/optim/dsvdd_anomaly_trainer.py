@@ -1,7 +1,6 @@
 from base.base_trainer import BaseTrainer
 from base.base_dataset import BaseADDataset
 from base.base_net import BaseNet
-from torch.utils.data.dataloader import DataLoader
 from sklearn.metrics import matthews_corrcoef, roc_auc_score, accuracy_score, precision_recall_fscore_support, roc_curve
 
 
@@ -11,45 +10,26 @@ import torch
 import torch.optim as optim
 import numpy as np
 
+from optim import LstmTrainer
+
 """
 Ajoy 使用异常数据训练SVDD网络
-     输入：球心c；已经训练好（正常数据）的SVDD网络
+     输入：球心c；已经训练好（正常数据）的SVDD网络；所有的异常数据(dataset)
      输出：由异常数据训练得到的svdd网络结构
      问题：用对半径R进行调整吗？
 """
 class Svdd_Anomaly_Trainer(BaseTrainer):
-    """
-        关键属性
-            c：球心坐标，（32, ）第一次训练结果的平均值
-            R：球面半径，（128,）
-            dist：输出到球心的距离，（128,）
-            output：每个输出32维，（128, 32）
 
-        半径 R 如何获取？
-            策略一：在测试时，把每一个训练集代入，得到一个输出，得到一个dist集合，找到最小的dist集合。
-            策略二：与 soft-boundary 采用相同策略。
-            np.quantile(np.sqrt(dist.clone().data.cpu().numpy()), 1 - nu)
-
-    """
-
-    def __init__(self, objective, R, c, nu: float, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 150,
+    def __init__(self, c, nu: float, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 150,
                  lr_milestones: tuple = (), batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
                  n_jobs_dataloader: int = 0):
         super().__init__(optimizer_name, lr, n_epochs, lr_milestones, batch_size, weight_decay, device,
                          n_jobs_dataloader)
 
-        assert objective in ('one-class', 'soft-boundary'), "Objective must be either 'one-class' or 'soft-boundary'."
-        self.objective = objective
-
         # Deep SVDD parameters
-        self.R = torch.tensor(R, device=self.device)  # radius R initialized with 0 by default.
         self.c = torch.tensor(c, device=self.device) if c is not None else None
         # Ajoy 软件界中的系数mu
         self.nu = nu
-
-        # Optimization parameters
-        # Ajoy 半径R更新的频率
-        self.warm_up_n_epochs = 10  # number of training epochs for soft-boundary Deep SVDD before radius R gets updated
 
         # join time
         self.test_auc = None
@@ -59,15 +39,17 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
         self.test_mcc = None
         self.test_ftr = None
         self.test_tpr = None
-
+    """
+    Ajoy
+        输入：dataset（LSTM网络输出的异常数据的中间编码）
+    """
     def train(self, dataset: BaseADDataset, net: BaseNet):
         logger = logging.getLogger()
 
         # Set device for networks
         net = net.to(self.device)
 
-        # Get train data loader
-        train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
+        train_anomaly_loader = dataset.anomaly_loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Set optimizer (Adam optimizer for now)
         optimizer = optim.Adam(net.parameters(), lr=self.lr, weight_decay=self.weight_decay,
@@ -76,14 +58,8 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
         # Set learning rate scheduler
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.lr_milestones, gamma=0.1)
 
-        # Initialize hypersphere center c (if c not loaded) Ajoy 函数在后面
-        if self.c is None:
-            logger.info('Initializing center c...')
-            self.c = self.init_center_c(train_loader, net)
-            logger.info('Center c initialized.')
-
         # Training
-        logger.info('Starting training...')
+        logger.info('Starting training with anomaly data...')
         start_time = time.time()
         net.train()
         for epoch in range(self.n_epochs):
@@ -95,7 +71,7 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
             loss_epoch = 0.0
             n_batches = 0
             epoch_start_time = time.time()
-            for data in train_loader:
+            for data in train_anomaly_loader:
                 inputs, _, _ = data
                 inputs = inputs.to(self.device)
 
@@ -104,20 +80,11 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
 
                 # Update networks parameters via backpropagation: forward + backward + optimize
                 outputs = net(inputs)
+                # AJoy 计算损失函数
                 dist = torch.sum((outputs - self.c) ** 2, dim=1)
-
-                if self.objective == 'soft-boundary':
-                    scores = dist - self.R ** 2
-                    loss = self.R ** 2 + (1 / self.nu) * torch.mean(torch.max(torch.zeros_like(scores), scores))
-                else:
-                    loss = torch.mean(dist)
+                loss = - torch.mean(dist)
                 loss.backward()
                 optimizer.step()
-
-                # Update hypersphere radius R on mini-batch distances
-                if (self.objective == 'soft-boundary') and (epoch >= self.warm_up_n_epochs):
-                    # Ajoy 每10次迭代更新一次半径R，利用参数nu更新半径R
-                    self.R.data = torch.tensor(get_radius(dist, self.nu), device=self.device)
 
                 loss_epoch += loss.item()
                 n_batches += 1
@@ -130,7 +97,7 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
         self.train_time = time.time() - start_time
         logger.info('Training time: %.3f' % self.train_time)
 
-        logger.info('Finished training.')
+        logger.info('Finished training with anomaly data.')
 
         return net
 
@@ -147,7 +114,7 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
             test_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Testing
-        logger.info('Starting testing...')
+        logger.info('Starting testing(after anomaly data trained)...')
         start_time = time.time()
         idx_label_score = []
         net.eval()
@@ -191,36 +158,8 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
         self.test_f_score = f_score[1]
 
         logger.info('Test set AUC: {:.2f}%'.format(100. * self.test_auc))
-        logger.info('Finished testing.')
+        logger.info('Finished testing(after anomaly data trained).')
 
-
-
-
-    def init_center_c(self, train_loader: DataLoader, net: BaseNet, eps=0.1):
-        """Initialize hypersphere center c as the mean from an initial forward pass on the data."""
-        n_samples = 0
-        c = torch.zeros(net.rep_dim, device=self.device)
-        #Ajoy 因为c的初始化只是将所有的训练数据输入到SVDD中运行一次得到的output的平均值
-        net.eval()
-        with torch.no_grad():
-            for data in train_loader:
-                # get the inputs of the batch
-                inputs, _, _ = data
-                inputs = inputs.to(self.device)
-                #Ajoy 一个batch的output
-                outputs = net(inputs)
-                #Ajoy 统计batch中的数据量
-                n_samples += outputs.shape[0]
-                #Ajoy 计算一个batch的output和
-                c += torch.sum(outputs, dim=0)
-
-        c /= n_samples
-
-        # If c_i is too close to 0, set to +-eps. Reason: a zero unit can be trivially matched with zero weights.
-        c[(abs(c) < eps) & (c < 0)] = -eps
-        c[(abs(c) < eps) & (c > 0)] = eps
-
-        return c
 
 
 def find_optimal_cutoff(label, y_prob):
@@ -232,7 +171,3 @@ def find_optimal_cutoff(label, y_prob):
     point = [fpr[youden_index], tpr[youden_index]]
     return optimal_threshold, point
 
-
-def get_radius(dist: torch.Tensor, nu: float):
-    """Optimally solve for radius R via the (1-nu)-quantile of distances."""
-    return np.quantile(np.sqrt(dist.clone().data.cpu().numpy()), 1 - nu)

@@ -77,7 +77,7 @@ class Kdd99_Dataset(TorchvisionDataset):
         test, test_label = load_data_kdd99(handle_test, final_test, self.n_features)  # kdd99 测试集
 
         # Ajoy 选择训练集异常数据的指定属性
-        anomaly, anomaly_label = load_data_kdd99(handle_train_anomaly, final_train_anomaly)
+        anomaly, anomaly_label = load_data_kdd99(handle_train_anomaly, final_train_anomaly, self.n_features)
 
         self.train = train
         self.test = test
@@ -92,7 +92,7 @@ class Kdd99_Dataset(TorchvisionDataset):
         self.train_set = Kdd99(train, train_label)
         self.test_set = Kdd99(test, test_label)
 
-        self.anmoly_set = Kdd99(anomaly, anomaly_label)
+        self.anomoly_set = Kdd99(anomaly, anomaly_label)
 
         print("train", train.shape)
         print("train_label", train_label.shape)

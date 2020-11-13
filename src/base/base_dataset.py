@@ -24,6 +24,7 @@ class BaseADDataset(ABC):
     AJoy
         在torchvision_dataset.py中实现该异常数据加载函数
     """
+    @abstractmethod
     def anomaly_loaders(self, batch_size: int, shuffle_train=True, num_workers: int = 0) -> (
             DataLoader, DataLoader):
         pass

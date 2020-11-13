@@ -1,6 +1,7 @@
 from base.base_trainer import BaseTrainer
 from base.base_dataset import BaseADDataset
 from base.base_net import BaseNet
+from networks import LstmNet
 from sklearn.metrics import roc_auc_score
 
 import torch
@@ -93,7 +94,6 @@ class LstmTrainer(BaseTrainer):
             for data in train_loader:
                 inputs, _, _ = data
                 inputs = inputs.to(self.device)
-
                 # Zero the networks parameter gradients
                 optimizer.zero_grad()
 
@@ -207,7 +207,7 @@ class LstmTrainer(BaseTrainer):
         return self.train_code, self.train_label, self.test_code, self.test_label
 
     # 获取输入数据集的中间编码
-    def get_code(self, dataset: BaseADDataset, net: BaseNet):
+    def get_code(self, dataset: BaseADDataset, net: LstmNet):
         # 定义输出的编码和标签
         other_code = []
         other_label = []
@@ -235,7 +235,7 @@ class LstmTrainer(BaseTrainer):
                     self.other_label.append(label[i])
 
                 # Ajoy LSTMnet中定义的forward函数中返回了encoder和decoder两个函数的值
-                code = net(inputs.view(-1, 1, self.n_features))
+                code, _ = net(inputs.view(-1, 1, self.n_features))
                 # Ajoy 从当前图中返回一个新的tensor，该tensor不需要计算梯度
                 code = code.detach().numpy()
 

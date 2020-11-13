@@ -116,6 +116,7 @@ class DeepSVDD(object):
     """
     Ajoy 
         dataset:LSTM-AE得到的中间编码 code_dataset
+        插入dsvdd_inint_var_trainer.py的逻辑调用代码，没有单独的./bean/xx
     """
     def pretrain(self, dataset: BaseADDataset, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 100,
                  lr_milestones: tuple = (), batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',

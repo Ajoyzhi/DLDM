@@ -103,6 +103,16 @@ def load_data_kdd99(handled_file, final_file,  features):
     x_mat = z_score_normalizations(x_mat)
     x_mat = min_max_normalizations(x_mat)
 
+    """
+    # 将y赋值给x_mat[last]
+    for i in range(rows):
+        if features == 9:
+            x_mat[i][9] = y_label[i]  # 将标签放于数组最后一列
+            # 不考虑src_bytes
+        elif features == 8:
+            x_mat[i][8] = y_label[i]  # 将标签放于数组最后一列
+    """
+
     #Ajoy 将处理好的数据输入到final文件中统一保存
     write_file(x_mat, final_file)
     # Ajoy 返回抽取的特征和label

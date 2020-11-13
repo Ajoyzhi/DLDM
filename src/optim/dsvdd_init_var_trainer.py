@@ -32,13 +32,8 @@ class DSVDDInitVarTrainer(BaseTrainer):
 
         # Results
         self.train_time = None
-        self.test_auc = None
         self.test_time = None
-        self.test_score = None
-        self.test_scores = None
-        self.test_fscore = None
-        self.test_ftr = None
-        self.test_tpr = None
+
 
     def train(self, dataset: BaseADDataset, dsvdd_init_net: BaseNet):
         print('c', self.c)
@@ -116,17 +111,28 @@ class DSVDDInitVarTrainer(BaseTrainer):
         # Testing
         logger.info('Starting testing with var...')
         start_time = time.time()
+        loss_epoch = 0
+        n_batches = 0
         dsvdd_init_net.eval()
         with torch.no_grad():
             for data in test_loader:
                 inputs, labels, idx = data
                 inputs = inputs.to(self.device)
                 outputs = dsvdd_init_net(inputs)
-                scores = var_loss(outputs)
+                loss = var_loss(outputs)
+
+                '''
                 print(
                     # '\nidx:', idx,
-                    '\nvar_loss:', scores
-                )
+                    '\nvar_loss:', scores)
+                '''
+                loss_epoch += loss.item()
+                n_batches += 1
+                # 每个batch的平均误差
+            logger.info('Test set Loss: {:.8f}'.format(loss_epoch / n_batches))
+
+        self.test_time = time.time() - start_time
+        logger.info('Testing time: %.3f' % self.test_time)
         logger.info('Fininshed testing with var.')
     """
     AJoy
