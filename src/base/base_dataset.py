@@ -11,6 +11,7 @@ class BaseADDataset(ABC):
         self.n_classes = 2  # 0: normal, 1: outlier
         self.train_set = None  # must be of type torch.utils.data.Dataset
         self.test_set = None  # must be of type torch.utils.data.Dataset
+        self.anomaly_set = None
 
     @abstractmethod
     def loaders(self, batch_size: int, shuffle_train=True, shuffle_test=False, num_workers: int = 0) -> (
@@ -18,13 +19,11 @@ class BaseADDataset(ABC):
         """Implement data loaders of type torch.utils.data.DataLoader for train_set and test_set."""
         pass
 
-    def __repr__(self):
-        return self.__class__.__name__
-    """
-    AJoy
-        在torchvision_dataset.py中实现该异常数据加载函数
-    """
     @abstractmethod
     def anomaly_loaders(self, batch_size: int, shuffle_train=True, num_workers: int = 0) -> (
-            DataLoader, DataLoader):
+            DataLoader):
+        # AJoy 加入获取异常数据的
         pass
+
+    def __repr__(self):
+        return self.__class__.__name__

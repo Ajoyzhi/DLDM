@@ -31,10 +31,11 @@ class Manager(object):
         lstm = Lstm(n_features=n_features)
         lstm.set_network('LstmNet')
         lstm.train(dataset=dataset, device=self.device, optimizer_name='RMSprop', n_epochs=n_epoch)
-     #   lstm.test(dataset=dataset, device=self.device)
+        # AJoy 测试中有获取训练数据（正常数据）和测试数据中间编码的代码
+        lstm.test(dataset=dataset, device=self.device)
         return lstm
 
-    def lstm_svdd_manager(self, dataset: BaseADDataset, dataset_anomaly: BaseADDataset, lstm: Lstm, pre_epoch=10, n_epochs=4):
+    def lstm_svdd_manager(self, dataset: BaseADDataset, lstm: Lstm, pre_epoch=10, n_epochs=4):
         """ svdd 训练 + 测试逻辑 """
         # Ajoy LSTM-AE输出的8维中间编码
         code_dataset = Code_Dataset(lstm)
@@ -45,11 +46,12 @@ class Manager(object):
         svdd.train(dataset=code_dataset, device=self.device, n_epochs=n_epochs)
      #   svdd.test(dataset=dataset, device=self.device)
 
-        # Ajoy 获取异常数据的LSTM编码
-        anomaly_code = lstm.get_code(dataset_anomaly)
+        # Ajoy 获取异常数据的LSTM编码（直接传入kdd99数据集，通过其中的loader获取异常数据）
+        # 将异常编码封装为数据集
+        anomaly_train_set = code_dataset.get_dataset(lstm, dataset)
         # AJOY 加入异常数据的训练过程
-        dsvdd_anomaly = DeepSVDDanomaly()
-        dsvdd_anomaly.train(dataset=anomaly_code, device=self.device, n_epochs=n_epochs)
+        dsvdd_anomaly = DeepSVDDanomaly(network=svdd.net, c=svdd.c)
+        dsvdd_anomaly.train(dataset=anomaly_train_set, device=self.device, n_epochs=n_epochs)
         dsvdd_anomaly.test(dataset=dataset, device=self.device)
         return svdd
 

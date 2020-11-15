@@ -39,7 +39,7 @@ class AETrainer(BaseTrainer):
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.lr_milestones, gamma=0.1)
 
         # Training
-        logger.info('Starting pretraining...')
+        logger.info('Starting pretraining SVDD-AE...')
         # Ajoy 整个训练时间
         start_time = time.time()
         ae_net.train()
@@ -82,7 +82,7 @@ class AETrainer(BaseTrainer):
 
         pretrain_time = time.time() - start_time
         logger.info('Pretraining time: %.3f' % pretrain_time)
-        logger.info('Finished pretraining.')
+        logger.info('Finished pretraining SVDD-AE.')
 
         return ae_net
 
@@ -97,7 +97,7 @@ class AETrainer(BaseTrainer):
         _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Testing
-        logger.info('Testing autoencoder...')
+        logger.info('Testing SVDD autoencoder...')
         loss_epoch = 0.0
         n_batches = 0
         start_time = time.time()
@@ -138,4 +138,4 @@ class AETrainer(BaseTrainer):
 
         test_time = time.time() - start_time
         logger.info('Autoencoder testing time: %.3f' % test_time)
-        logger.info('Finished testing autoencoder.')
+        logger.info('Finished testing SVDD autoencoder.')

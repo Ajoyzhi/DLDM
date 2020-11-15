@@ -28,7 +28,7 @@ def self_compare_exper(device: str = 'cuda', n_features=9, alpha=0.1, n=1, s=2):
 
     kdd99_dataset = Kdd99_Dataset(n_features=n_features, exper_type=0, dos_types=0)
     # 加载训练集中的异常数据
-    anomaly_set= Kdd99_Dataset(n_features=n_features).anomoly_set
+    # anomaly_set= Kdd99_Dataset(n_features=n_features).anomoly_set
 
     for i in range(n):
         print("---------- 第", i + 1, "轮迭代 ----------")
@@ -36,7 +36,7 @@ def self_compare_exper(device: str = 'cuda', n_features=9, alpha=0.1, n=1, s=2):
         manager = Manager(device)
         # AJoy 对LSTM、DSVDD（这个应该是LSTM+DSVDD）和DLDM进行训练
         lstm = manager.lstm_manager(dataset=kdd99_dataset, n_features=n_features, n_epoch=10)
-        svdd = manager.lstm_svdd_manager(dataset=kdd99_dataset, dataset_anomaly=anomaly_set, lstm=lstm, pre_epoch=10, n_epochs=4)
+        svdd = manager.lstm_svdd_manager(dataset=kdd99_dataset, lstm=lstm, pre_epoch=10, n_epochs=4)
         join = manager.join_manager(dataset=kdd99_dataset, lstm=lstm, svdd=svdd, alpha=alpha, n_features=n_features, n_epochs=4)
         # Ajoy 结果展示
         models = [svdd, join]

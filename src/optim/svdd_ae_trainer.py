@@ -37,7 +37,7 @@ class SvddAETrainer(BaseTrainer):
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.lr_milestones, gamma=0.1)
 
         # Training
-        logger.info('Starting pretraining...')
+        logger.info('Starting pretraining svdd-ae...')
         start_time = time.time()
         ae_net.train()
         for epoch in range(self.n_epochs):
@@ -73,7 +73,7 @@ class SvddAETrainer(BaseTrainer):
 
         pretrain_time = time.time() - start_time
         logger.info('Pretraining time: %.3f' % pretrain_time)
-        logger.info('Finished pretraining.')
+        logger.info('Finished pretraining svdd-ae.')
 
         return ae_net
 
@@ -87,7 +87,7 @@ class SvddAETrainer(BaseTrainer):
         _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Testing
-        logger.info('Testing autoencoder...')
+        logger.info('Testing autoencoder(svdd)...')
         loss_epoch = 0.0
         n_batches = 0
         start_time = time.time()
@@ -122,4 +122,4 @@ class SvddAETrainer(BaseTrainer):
 
         test_time = time.time() - start_time
         logger.info('Autoencoder testing time: %.3f' % test_time)
-        logger.info('Finished testing autoencoder.')
+        logger.info('Finished testing autoencoder(svdd).')

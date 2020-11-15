@@ -144,7 +144,7 @@ class JoinTrainer(BaseTrainer):
 
         self.train_time = time.time() - start_time
         logger.info('Training time: %.3f' % self.train_time)
-        logger.info('Finished training.')
+        logger.info('Finished training join.')
 
         return join_net
 
@@ -157,7 +157,7 @@ class JoinTrainer(BaseTrainer):
         _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Testing
-        logger.info('Starting testing...')
+        logger.info('Starting testing join...')
         start_time = time.time()
         idx_label_score = []
         join_net.eval()
@@ -203,7 +203,7 @@ class JoinTrainer(BaseTrainer):
         self.test_mcc = matthews_corrcoef(labels, pred_labels)
 
         logger.info('Test set AUC: {:.2f}%'.format(100. * self.test_auc))
-        logger.info('Finished testing.')
+        logger.info('Finished testing join.')
 
 
 def find_optimal_cutoff(label, y_prob):

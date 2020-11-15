@@ -37,15 +37,26 @@ class Code_Dataset(TorchvisionDataset):
         print("test_label", np.array(test_label).shape)
 
         print('train_size', len(self.train_set))
-        print(self.train_set.__getitem__(0))
+        print(self.train_set.__getitem__(200))
         # print(roc_self.train_set.__getitem__(2000))
         # print(roc_self.train_set.__getitem__(7000))
 
         print('test_size', len(self.test_set))
-        print(self.test_set.__getitem__(0))
+        print(self.test_set.__getitem__(200))
         # print(roc_self.test_set.__getitem__(2000))
 #        print(roc_self.test_set.__getitem__(7000))
 
+    def get_dataset(self, lstm:Lstm, dataset):
+        # dataset 应该是所有异常数据封装号的数据集
+        anomaly_train_code, anomaly_train_label = lstm.get_code(dataset)
+        anomaly_train_set = Code(np.array(anomaly_train_code), np.array(anomaly_train_label))
+
+        print("anomaly_train_code", np.array(anomaly_train_code).shape)
+        print("anomaly_train_label", np.array(anomaly_train_label).shape)
+        print('anomaly_train_size', len(anomaly_train_set))
+        print(anomaly_train_set.__getitem__(200))
+
+        return anomaly_train_set
 
 class Code(Dataset.Dataset):
 

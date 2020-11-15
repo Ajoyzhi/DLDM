@@ -207,6 +207,11 @@ class LstmTrainer(BaseTrainer):
         return self.train_code, self.train_label, self.test_code, self.test_label
 
     # 获取输入数据集的中间编码
+    """
+    AJoy
+        输入 :dataset(kdd99数据集)，net（lstm网络）
+        输出：dataset.anomaly_loaders（异常数据）的中间编码和标签
+    """
     def get_code(self, dataset: BaseADDataset, net: LstmNet):
         # 定义输出的编码和标签
         other_code = []
@@ -232,7 +237,7 @@ class LstmTrainer(BaseTrainer):
                 label = labels.numpy()
 
                 for i in range(len(label)):
-                    self.other_label.append(label[i])
+                    other_label.append(label[i])
 
                 # Ajoy LSTMnet中定义的forward函数中返回了encoder和decoder两个函数的值
                 code, _ = net(inputs.view(-1, 1, self.n_features))
@@ -242,7 +247,7 @@ class LstmTrainer(BaseTrainer):
                 for i in range(len(code)):
                     # Ajoy 将测试数据集的中间编码放入test_code数组
                     # 【为什么要用追加？因为一次只能对一个batch的数据进行操作，所以只能得到一个batch的code，所以每次要追加】
-                    self.other_code.append(code[i])
+                    other_code.append(code[i])
 
         logger.info('Finished getting code.')
 

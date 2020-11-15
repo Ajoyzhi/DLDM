@@ -82,4 +82,5 @@ class Lstm(object):
         return self.trainer.load_code()
 
     def get_code(self, dataset: BaseADDataset):
+        # 返回中间编码和label
         return self.trainer.get_code(dataset, self.net)

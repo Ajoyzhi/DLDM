@@ -20,8 +20,8 @@ class TorchvisionDataset(BaseADDataset):
         return train_loader, test_loader
 
     def anomaly_loaders(self,  batch_size: int, shuffle_train_anomaly=True, num_workers: int = 0) -> (
-            DataLoader, DataLoader):
+            DataLoader):
 
-        anomaly_loader = DataLoader(dataset=self.train_set, batch_size=batch_size, shuffle=shuffle_train_anomaly,
+        anomaly_loader = DataLoader(dataset=self.anomaly_set, batch_size=batch_size, shuffle=shuffle_train_anomaly,
                                   num_workers=num_workers)
         return anomaly_loader

@@ -1,8 +1,9 @@
+from networks import SvddNet
 from base.base_trainer import BaseTrainer
 from base.base_dataset import BaseADDataset
 from base.base_net import BaseNet
 from sklearn.metrics import matthews_corrcoef, roc_auc_score, accuracy_score, precision_recall_fscore_support, roc_curve
-
+import torch.utils.data as Data
 
 import logging
 import time
@@ -10,7 +11,7 @@ import torch
 import torch.optim as optim
 import numpy as np
 
-from optim import LstmTrainer
+from optim import DeepSVDDTrainer
 
 """
 Ajoy 使用异常数据训练SVDD网络
@@ -20,16 +21,14 @@ Ajoy 使用异常数据训练SVDD网络
 """
 class Svdd_Anomaly_Trainer(BaseTrainer):
 
-    def __init__(self, c, nu: float, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 150,
+    def __init__(self, network: SvddNet, c, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 150,
                  lr_milestones: tuple = (), batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
                  n_jobs_dataloader: int = 0):
         super().__init__(optimizer_name, lr, n_epochs, lr_milestones, batch_size, weight_decay, device,
                          n_jobs_dataloader)
 
-        # Deep SVDD parameters
-        self.c = torch.tensor(c, device=self.device) if c is not None else None
-        # Ajoy 软件界中的系数mu
-        self.nu = nu
+        self.net = network
+        self.c = c
 
         # join time
         self.test_auc = None
@@ -41,19 +40,26 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
         self.test_tpr = None
     """
     Ajoy
-        输入：dataset（LSTM网络输出的异常数据的中间编码）
+        输入：dataset（LSTM网络输出的异常数据的中间编码对应的数据集）
     """
-    def train(self, dataset: BaseADDataset, net: BaseNet):
+    def train(self, dataset: BaseADDataset):
         logger = logging.getLogger()
 
         # Set device for networks
-        net = net.to(self.device)
+        net = self.net.to(self.device)
 
-        train_anomaly_loader = dataset.anomaly_loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
+        # Ajoy 修改数据集的loader（直接分batch就好）
+        train_anomaly_loader = Data.DataLoader(dataset=dataset,
+                                               batch_size=self.batch_size,
+                                               # 每次采样是否打乱顺序
+                                               shuffle=False,
+                                               # 子进程的数量
+                                               # 如果子进程数大于0，说明要进行多线程编程(一定要有一个主函数)
+                                               num_workers=self.n_jobs_dataloader)
+
 
         # Set optimizer (Adam optimizer for now)
-        optimizer = optim.Adam(net.parameters(), lr=self.lr, weight_decay=self.weight_decay,
-                               amsgrad=self.optimizer_name == 'amsgrad')
+        optimizer = optim.Adam(net.parameters(), lr=self.lr, weight_decay=self.weight_decay, amsgrad=self.optimizer_name == 'amsgrad')
 
         # Set learning rate scheduler
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.lr_milestones, gamma=0.1)
@@ -124,10 +130,7 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
                 inputs = inputs.to(self.device)
                 outputs = net(inputs)
                 dist = torch.sum((outputs - self.c) ** 2, dim=1)
-                if self.objective == 'soft-boundary':
-                    scores = dist - self.R ** 2
-                else:
-                    scores = dist
+                scores = dist
 
                 # Save triples of (idx, label, score) in a list
                 idx_label_score += list(zip(idx.cpu().data.numpy().tolist(),

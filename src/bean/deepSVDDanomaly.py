@@ -1,19 +1,17 @@
 from base.base_dataset import BaseADDataset
 from dsvdd_anomaly_trainer import Svdd_Anomaly_Trainer
-from networks.main import build_network
-from optim.lstm_trainer import LstmTrainer
+from networks import SvddNet
 
 """
 Ajoy
     train()函数中的数据集为训练集中异常数据通过LSTM网络的中间编码
 """
 class DeepSVDDanomaly(object):
-    def __init__(self, n_features=8):
-        """初始化lstm参数."""
+    def __init__(self, n_features=8, network=SvddNet, c=None):
+        """获取svdd网络中的参数参数."""
         self.n_features = n_features
-
-        self.net_name = None
-        self.net = None
+        self.net = network
+        self.c = c
 
         self.trainer = None
         self.optimizer_name = None
@@ -25,11 +23,6 @@ class DeepSVDDanomaly(object):
             'test_scores': None,
         }
 
-    def set_network(self, net_name):
-        """Builds the neural networks ."""
-
-        self.net_name = net_name
-        self.net = build_network(net_name, self.n_features)
 
     def train(self, dataset: BaseADDataset, optimizer_name: str = 'RMSprop', lr: float = 0.001, n_epochs: int = 50,
               lr_milestones: tuple = (), batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
@@ -37,17 +30,18 @@ class DeepSVDDanomaly(object):
         """Trains the svdd on the training anomaly data."""
 
         self.optimizer_name = optimizer_name
-        self.trainer = Svdd_Anomaly_Trainer(optimizer_name,
-                                   lr=lr,
-                                   n_epochs=n_epochs,
-                                   lr_milestones=lr_milestones,
-                                   batch_size=batch_size,
-                                   weight_decay=weight_decay,
-                                   device=device,
-                                   n_jobs_dataloader=n_jobs_dataloader,
-                                   n_features=self.n_features)
+        self.trainer = Svdd_Anomaly_Trainer(self.net,
+                                            self.c,
+                                            optimizer_name,
+                                            lr=lr,
+                                            n_epochs=n_epochs,
+                                            lr_milestones=lr_milestones,
+                                            batch_size=batch_size,
+                                            weight_decay=weight_decay,
+                                            device=device,
+                                            n_jobs_dataloader=n_jobs_dataloader)
         # Get the model
-        self.net = self.trainer.train(dataset, self.net)
+        self.net = self.trainer.train(dataset)
         self.results['train_time'] = self.trainer.train_time
 
     def test(self, dataset: BaseADDataset, device: str = 'cuda', n_jobs_dataloader: int = 0):

@@ -119,7 +119,7 @@ class SVMTrainer(BaseTrainer):
         _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Testing
-        logger.info('Testing autoencoder...')
+        logger.info('Testing svm...')
         loss_epoch = 0.0
         n_batches = 0
         start_time = time.time()

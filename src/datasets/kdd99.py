@@ -92,7 +92,7 @@ class Kdd99_Dataset(TorchvisionDataset):
         self.train_set = Kdd99(train, train_label)
         self.test_set = Kdd99(test, test_label)
 
-        self.anomoly_set = Kdd99(anomaly, anomaly_label)
+        self.anomaly_set = Kdd99(anomaly, anomaly_label)
 
         print("train", train.shape)
         print("train_label", train_label.shape)
@@ -100,12 +100,12 @@ class Kdd99_Dataset(TorchvisionDataset):
         print("test_label", test_label.shape)
 
         print("anomaly_train", anomaly.shape)
-        print("anomaly_train_label", anomaly_label)
+        print("anomaly_train_label", anomaly_label.shape)
 
         print(self.train_set.__getitem__(0))
         print(self.test_set.__getitem__(0))
 
-        print(self.anomaly_train_label.__getitem__(0))
+        print(self.anomaly_set.__getitem__(0))
     # AJoy 为啥更新？
     # Ajoy 是不是对多个数据进行存储？
     def update_test(self, exper_type=0, dos_types=0):

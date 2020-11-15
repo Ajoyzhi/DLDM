@@ -53,7 +53,7 @@ class AEKTrainer(BaseTrainer):
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.lr_milestones, gamma=0.1)
 
         # Training
-        logger.info('Starting ae ...')
+        logger.info('Starting ae(K-means) ...')
         start_time = time.time()
         ae_net.train()
         for epoch in range(self.n_epochs):
@@ -89,7 +89,7 @@ class AEKTrainer(BaseTrainer):
 
         pretrain_time = time.time() - start_time
         logger.info('training time: %.3f' % pretrain_time)
-        logger.info('Finished training.')
+        logger.info('Finished training ae(k-means).')
 
         return ae_net
 
@@ -111,7 +111,7 @@ class AEKTrainer(BaseTrainer):
             _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Testing
-        logger.info('Testing ae...')
+        logger.info('Testing ae(k-means)...')
         loss_epoch = 0.0
         n_batches = 0
         start_time = time.time()
@@ -189,7 +189,7 @@ class AEKTrainer(BaseTrainer):
             logger.info('Test set AUC: {:.2f}%'.format(100. * self.test_auc))
 
         logger.info('ae testing time: %.3f' % self.test_time)
-        logger.info('Finished testing ae.')
+        logger.info('Finished testing ae(k-means).')
 
     def get_radius(self, x):
         """
