@@ -1,7 +1,7 @@
 from base.base_trainer import BaseTrainer
 from base.base_dataset import BaseADDataset
 from base.base_net import BaseNet
-from torch.utils.data.dataloader import DataLoader
+import torch.utils.data as Data
 from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_fscore_support
 
 import logging
@@ -48,7 +48,9 @@ class DeepSVDDTrainer(BaseTrainer):
         self.test_ftr = None
         self.test_tpr = None
 
-    def train(self, dataset: BaseADDataset, net: BaseNet):
+
+    # AJoy 异常时传入的为异常数据，正常是为kdd99数据集
+    def train(self, dataset: BaseADDataset, net: BaseNet, isanomaly=True):
         # Ajoy 此时的c应该是已经初始化完成的，和dsvdd_inin_var_trainer中的c一致
         print('deepSVDD_trainer_R', self.R)
         print('deepSVDD_trainer_c', self.c)
@@ -58,7 +60,17 @@ class DeepSVDDTrainer(BaseTrainer):
         net = net.to(self.device)
 
         # Get train data loader
-        train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
+        # Ajoy 判断输入的数据集为正常还是异常
+        if isanomaly:
+            train_loader =  Data.DataLoader(dataset=dataset,
+                                               batch_size=self.batch_size,
+                                               # 每次采样是否打乱顺序
+                                               shuffle=False,
+                                               # 子进程的数量
+                                               # 如果子进程数大于0，说明要进行多线程编程(一定要有一个主函数)
+                                               num_workers=self.n_jobs_dataloader)
+        else:
+            train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Set optimizer (Adam optimizer for now)
         optimizer = optim.Adam(net.parameters(), lr=self.lr, weight_decay=self.weight_decay,
@@ -100,11 +112,18 @@ class DeepSVDDTrainer(BaseTrainer):
                 outputs = net(inputs)
                 dist = torch.sum((outputs - self.c) ** 2, dim=1)
 
-                if self.objective == 'soft-boundary':
-                    scores = dist - self.R ** 2
-                    loss = self.R ** 2 + (1 / self.nu) * torch.mean(torch.max(torch.zeros_like(scores), scores))
+                # Ajoy 损失函数不同
+                # Ajoy 如果是异常数据集就计算负的损失函数
+                if isanomaly:
+                    loss = - torch.mean(dist)
+                # Ajoy 如果为正常数据集就使用软边界或者单类分类
                 else:
-                    loss = torch.mean(dist)
+                    if self.objective == 'soft-boundary':
+                        scores = dist - self.R ** 2
+                        loss = self.R ** 2 + (1 / self.nu) * torch.mean(torch.max(torch.zeros_like(scores), scores))
+                    else:
+                        loss = torch.mean(dist)
+
                 loss.backward()
                 optimizer.step()
 

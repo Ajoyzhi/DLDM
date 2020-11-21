@@ -37,7 +37,7 @@ def self_compare_exper(device: str = 'cuda', n_features=9, alpha=0.1, n=1, s=2):
         # AJoy 对LSTM、DSVDD（这个应该是LSTM+DSVDD）和DLDM进行训练
         lstm = manager.lstm_manager(dataset=kdd99_dataset, n_features=n_features, n_epoch=10)
         svdd = manager.lstm_svdd_manager(dataset=kdd99_dataset, lstm=lstm, pre_epoch=10, n_epochs=4)
-        join = manager.join_manager(dataset=kdd99_dataset, lstm=lstm, svdd=svdd, alpha=alpha, n_features=n_features, n_epochs=4)
+        join = manager.join_manager(dataset=kdd99_dataset, lstm=lstm, svdd=svdd,alpha=alpha, n_features=n_features, n_epochs=4)
         # Ajoy 结果展示
         models = [svdd, join]
         aucs = add_list(s=s, datas=aucs, models=models, key='test_auc')

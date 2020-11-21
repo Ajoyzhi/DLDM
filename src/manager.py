@@ -9,7 +9,6 @@ from bean.join import Join
 from bean.aek import AEK
 from bean.rbm import RBM
 from bean.svm import SVM
-from deepSVDDanomaly import DeepSVDDanomaly
 
 
 """ 
@@ -43,16 +42,15 @@ class Manager(object):
         svdd = DeepSVDD(lstm=lstm, objective='one-class', n_code=8)
         svdd.set_network('SvddNet')
         svdd.pretrain(dataset=code_dataset, device=self.device, n_epochs=pre_epoch)
-        svdd.train(dataset=code_dataset, device=self.device, n_epochs=n_epochs)
-     #   svdd.test(dataset=dataset, device=self.device)
-
+        # Ajoy 利用正常数据进行训练
+        # AJoy 返回DeepSVDD对象
+        svdd = svdd.train(dataset=code_dataset, device=self.device, n_epochs=n_epochs, isanomaly=False)
         # Ajoy 获取异常数据的LSTM编码（直接传入kdd99数据集，通过其中的loader获取异常数据）
         # 将异常编码封装为数据集
         anomaly_train_set = code_dataset.get_dataset(lstm, dataset)
         # AJOY 加入异常数据的训练过程
-        dsvdd_anomaly = DeepSVDDanomaly(network=svdd.net, c=svdd.c)
-        svdd = dsvdd_anomaly.train(dataset=anomaly_train_set, device=self.device, n_epochs=n_epochs)
-       #  dsvdd_anomaly.test(dataset=dataset, device=self.device)
+        svdd = svdd.train(dataset=anomaly_train_set, device=self.device, n_epochs=n_epochs, isanomaly=True)
+        #   svdd.test(dataset=dataset, device=self.device)
         return svdd
 
     def join_manager(self, dataset: BaseADDataset, lstm: Lstm, svdd: DeepSVDD, alpha=0.15, n_features=9, n_epochs=4):
