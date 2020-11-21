@@ -51,8 +51,8 @@ class Manager(object):
         anomaly_train_set = code_dataset.get_dataset(lstm, dataset)
         # AJOY 加入异常数据的训练过程
         dsvdd_anomaly = DeepSVDDanomaly(network=svdd.net, c=svdd.c)
-        dsvdd_anomaly.train(dataset=anomaly_train_set, device=self.device, n_epochs=n_epochs)
-        dsvdd_anomaly.test(dataset=dataset, device=self.device)
+        svdd = dsvdd_anomaly.train(dataset=anomaly_train_set, device=self.device, n_epochs=n_epochs)
+       #  dsvdd_anomaly.test(dataset=dataset, device=self.device)
         return svdd
 
     def join_manager(self, dataset: BaseADDataset, lstm: Lstm, svdd: DeepSVDD, alpha=0.15, n_features=9, n_epochs=4):

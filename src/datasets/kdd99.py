@@ -42,7 +42,7 @@ class Kdd99_Dataset(TorchvisionDataset):
             n_features：特征数目
             dos_type：dos 攻击种类数
 
-            exper_type：代表实验类型
+            exper_type：代表
                 0：基础实验（join，ae_kmeans），训练集获取正常数据，测试集获取所有数据
                 1：对比实验（rbm）：训练集获取所有数据，测试集获取所有数据
                 2：对比实验（join，ae_kmeans，dos_types）：训练集获取正常数据，测试集获取正常数据 + 指定攻击

@@ -49,8 +49,9 @@ class DeepSVDDTrainer(BaseTrainer):
         self.test_tpr = None
 
     def train(self, dataset: BaseADDataset, net: BaseNet):
-        print('R', self.R)
-        print('c', self.c)
+        # Ajoy 此时的c应该是已经初始化完成的，和dsvdd_inin_var_trainer中的c一致
+        print('deepSVDD_trainer_R', self.R)
+        print('deepSVDD_trainer_c', self.c)
         logger = logging.getLogger()
 
         # Set device for networks

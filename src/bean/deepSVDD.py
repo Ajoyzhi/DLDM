@@ -117,6 +117,7 @@ class DeepSVDD(object):
     Ajoy 
         dataset:LSTM-AE得到的中间编码 code_dataset
         插入dsvdd_inint_var_trainer.py的逻辑调用代码，没有单独的./bean/xx
+        DSVDDInitVarTrainer已经过拟合了，所以减少迭代次数从10-》5
     """
     def pretrain(self, dataset: BaseADDataset, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 100,
                  lr_milestones: tuple = (), batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
@@ -132,7 +133,7 @@ class DeepSVDD(object):
         self.init_network_weights_from_pretraining()
 
         # Ajoy 在对DSVDD模型进行初始化之后，再利用方差训练dsvdd网络
-        self.svdd_init_var_trainer = DSVDDInitVarTrainer(self.c, optimizer_name, lr=lr, n_epochs=n_epochs, lr_milestones=lr_milestones,
+        self.svdd_init_var_trainer = DSVDDInitVarTrainer(self.c, optimizer_name, lr=lr, n_epochs= 5 , lr_milestones=lr_milestones,
                                                          batch_size=batch_size, weight_decay=weight_decay, device=device,
                                                          n_jobs_dataloader=n_jobs_dataloader)
         self.net = self.svdd_init_var_trainer.train(dataset, self.net)

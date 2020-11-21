@@ -44,6 +44,9 @@ class DeepSVDDanomaly(object):
         self.net = self.trainer.train(dataset)
         self.results['train_time'] = self.trainer.train_time
 
+        return  self.net
+
+    # Ajoy 需要输入测试数据在LSTM网络中的中间编码
     def test(self, dataset: BaseADDataset, device: str = 'cuda', n_jobs_dataloader: int = 0):
         """Tests svdd model on the test data."""
 

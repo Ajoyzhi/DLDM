@@ -36,7 +36,6 @@ class DSVDDInitVarTrainer(BaseTrainer):
 
 
     def train(self, dataset: BaseADDataset, dsvdd_init_net: BaseNet):
-        print('c', self.c)
         logger = logging.getLogger()
 
         # Set device for networks
@@ -121,11 +120,6 @@ class DSVDDInitVarTrainer(BaseTrainer):
                 outputs = dsvdd_init_net(inputs)
                 loss = var_loss(outputs)
 
-                '''
-                print(
-                    # '\nidx:', idx,
-                    '\nvar_loss:', scores)
-                '''
                 loss_epoch += loss.item()
                 n_batches += 1
                 # 每个batch的平均误差
@@ -162,15 +156,18 @@ class DSVDDInitVarTrainer(BaseTrainer):
                 n_samples += outputs.shape[0]
                 # 求每列的和
                 c += torch.sum(outputs, dim=0)
+                self.c = c
 
-        c /= n_samples
+        self.c /= n_samples
 
         # If c_i is too close to 0, set to +-eps. Reason: a zero unit can be trivially matched with zero weights.
-        c[(abs(c) < eps) & (c < 0)] = -eps
-        c[(abs(c) < eps) & (c > 0)] = eps
+        self.c[(abs(self.c) < eps) & (self.c < 0)] = -eps
+        self.c[(abs(self.c) < eps) & (self.c > 0)] = eps
+
+        print("dsvdd_init_var_trainer_c: ", self.c)
 
         logger.info('Center c initialized.')
-        return c
+        return self.c
 
 # 定义损失函数
 def var_loss(data):

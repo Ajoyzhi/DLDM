@@ -86,8 +86,13 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
 
                 # Update networks parameters via backpropagation: forward + backward + optimize
                 outputs = net(inputs)
-                # AJoy 计算损失函数
-                dist = torch.sum((outputs - self.c) ** 2, dim=1)
+
+                # Ajoy c为一个list，所以需要转化为tensor类型
+                c = torch.Tensor(self.c)
+               # print("the shape of c:", c.shape)
+               # print("the shape of output:", outputs.shape)
+
+                dist = torch.sum((outputs - c) ** 2, dim=1)
                 loss = - torch.mean(dist)
                 loss.backward()
                 optimizer.step()
@@ -107,6 +112,7 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
 
         return net
 
+    # Ajoy 输入的数据不对
     def test(self, dataset: BaseADDataset, net: BaseNet, flag=0):
         logger = logging.getLogger()
 
@@ -129,7 +135,10 @@ class Svdd_Anomaly_Trainer(BaseTrainer):
                 inputs, labels, idx = data
                 inputs = inputs.to(self.device)
                 outputs = net(inputs)
-                dist = torch.sum((outputs - self.c) ** 2, dim=1)
+
+                c = torch.Tensor(self.c)
+
+                dist = torch.sum((outputs - c) ** 2, dim=1)
                 scores = dist
 
                 # Save triples of (idx, label, score) in a list
