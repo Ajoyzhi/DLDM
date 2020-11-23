@@ -20,11 +20,11 @@ from base.torchvision_dataset import TorchvisionDataset
 """
 Ajoy
     训练集:  原始 ./dataset/kddcup_10_percent_corrected
-            数值化（所有正常数据） ./dataset/kddcup_10_percent_corrected.csv
-            选择对应特征（所有正常数据） ./dataset/kddcup.data_10_percent_final.cvs
+            数值化（所有正常数据） ./dataset/kddcup_10_percent_corrected.csv（有标记）
+            选择对应特征（所有正常数据） ./dataset/kddcup.data_10_percent_final.cvs（没有标记）
     测试集： 原始 ./dataset/corrected
-            数值化 ./dataset/corrected.cvs
-            选择对应特征 ./dataset/corrected_final.cvs
+            数值化 ./dataset/corrected.cvs（有标记）
+            选择对应特征 ./dataset/corrected_final.cvs（没有标记）
 """
 class Kdd99_Dataset(TorchvisionDataset):
     """
@@ -69,7 +69,7 @@ class Kdd99_Dataset(TorchvisionDataset):
         pre_file(src_train, handle_train, train=1, exper_type=self.exper_type, dos_types=self.dos_types)
         pre_file(src_test, handle_test, train=0, exper_type=self.exper_type, dos_types=self.dos_types)
 
-        # Ajoy 筛选训练集所有的异常数据
+        # Ajoy 筛选训练集所有的异常数据(对所有数据进行数值化，其中包含label)
         get_anomaly_from_train(src_train, handle_train_anomaly)
 
         #AJOY 加载了KDD99中固定的9个特征（同时还将处理后的数据进行了保存） pre_data

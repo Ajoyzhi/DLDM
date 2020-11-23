@@ -96,25 +96,21 @@ def load_data_kdd99(handled_file, final_file,  features):
             x_mat[i][7] = item_mat[0]   # duration
 
         y_label[i] = item_mat[41]   # label
-        # print(i, "-", x_mat[i][0], x_mat[i][1], x_mat[i][2], x_mat[i][3], x_mat[i][4], x_mat[i][5], x_mat[i][6], x_mat[i][7])
+        # print(i, "-", x_mat[i][0], x_mat[i][1], x_mat[i][2], x_mat[i][3], x_mat[i][4], x_mat[i][5], x_mat[i][6], x_mat[i][7], x_mat[i][8])
 
     fr.close()
     # Ajoy 对特征进行统一处理（标准化、归一化）
     x_mat = z_score_normalizations(x_mat)
     x_mat = min_max_normalizations(x_mat)
 
-    """
-    # 将y赋值给x_mat[last]
-    for i in range(rows):
-        if features == 9:
-            x_mat[i][9] = y_label[i]  # 将标签放于数组最后一列
-            # 不考虑src_bytes
-        elif features == 8:
-            x_mat[i][8] = y_label[i]  # 将标签放于数组最后一列
-    """
+    print("x_mat:", x_mat.shape)
+    print("y:", y_label.shape)
+
+    # Ajoy 将数据和label合并为一个数组，输入到文件中
+    data_label = np.c_[x_mat,y_label]
 
     #Ajoy 将处理好的数据输入到final文件中统一保存
-    write_file(x_mat, final_file)
+    write_file(data_label, final_file)
     # Ajoy 返回抽取的特征和label
     return x_mat, y_label
 
