@@ -1,3 +1,5 @@
+import random
+
 import torch
 import numpy as np
 import csv
@@ -34,8 +36,12 @@ def min_max_normalizations(x_mat):
 
     return x_mat
 
-
-def load_data_kdd99(handled_file, final_file,  features):
+"""
+Ajoy 
+    加入加载的数据比例
+    ratio:float类型 [0,1]
+"""
+def load_data_kdd99(handled_file, final_file, features, ratio):
     """
         数据预处理：
             输入文件名 xx.csv
@@ -103,17 +109,27 @@ def load_data_kdd99(handled_file, final_file,  features):
     x_mat = z_score_normalizations(x_mat)
     x_mat = min_max_normalizations(x_mat)
 
-    print("x_mat:", x_mat.shape)
-    print("y:", y_label.shape)
+    # print("x_mat:", x_mat.shape)
+    # print("y:", y_label.shape)
 
+    # AJOY：从x_mat和y_label中随机选择对应的数量的样本
+    # Ajoy 确定选择的样本数量，转换为整数
+    number = int(rows * ratio)
     # Ajoy 将数据和label合并为一个数组，输入到文件中
     data_label = np.c_[x_mat,y_label]
+    train_sample = sample(data_label, number)
+
+    print("train_simple:", train_sample.shape)
+
+    # AJoy 最终返回数据和label
+    x_data = [row[:-1] for row in train_sample]
+    y = [row[-1] for row in train_sample]
+
 
     #Ajoy 将处理好的数据输入到final文件中统一保存
     write_file(data_label, final_file)
     # Ajoy 返回抽取的特征和label
-    return x_mat, y_label
-
+    return x_data, y
 
 def write_file(data, data_file):
     data_file = open(data_file, 'w', newline='')
@@ -125,3 +141,20 @@ def write_file(data, data_file):
         count += 1
         # print(count, 'final:', temp_line[0], temp_line[1], temp_line[2], temp_line[3])
     data_file.close()
+
+
+#功能：随机选择array中固定数量的行
+#输入：array:原矩阵；number：选择的数量
+def sample(array, number):
+    rand_arr = np.arange(array.shape[0])
+
+    np.random.shuffle(rand_arr)
+    sample= array[rand_arr[0:number]]
+
+    return sample
+
+
+
+
+
+

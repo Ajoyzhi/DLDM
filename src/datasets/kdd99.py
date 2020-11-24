@@ -73,11 +73,13 @@ class Kdd99_Dataset(TorchvisionDataset):
         get_anomaly_from_train(src_train, handle_train_anomaly)
 
         #AJOY 加载了KDD99中固定的9个特征（同时还将处理后的数据进行了保存） pre_data
-        train, train_label = load_data_kdd99(handle_train, final_train, self.n_features)
-        test, test_label = load_data_kdd99(handle_test, final_test, self.n_features)  # kdd99 测试集
+        # Ajoy 训练集中的正常数据9万多条，只加载10%，大概9千多条
+        train, train_label = load_data_kdd99(handle_train, final_train, self.n_features, 0.1)
+        # AJoy 加载全部的测试数据
+        test, test_label = load_data_kdd99(handle_test, final_test, self.n_features, 1)  # kdd99 测试集
 
-        # Ajoy 选择训练集异常数据的指定属性
-        anomaly, anomaly_label = load_data_kdd99(handle_train_anomaly, final_train_anomaly, self.n_features)
+        # Ajoy 选择训练集异常数据的指定属性，并30万条数据，加载1%，大概3000条数据
+        anomaly, anomaly_label = load_data_kdd99(handle_train_anomaly, final_train_anomaly, self.n_features, 0.01)
 
         self.train = train
         self.test = test
@@ -106,6 +108,7 @@ class Kdd99_Dataset(TorchvisionDataset):
         print(self.test_set.__getitem__(0))
 
         print(self.anomaly_set.__getitem__(0))
+
     # AJoy 为啥更新？
     # Ajoy 是不是对多个数据进行存储？
     def update_test(self, exper_type=0, dos_types=0):
